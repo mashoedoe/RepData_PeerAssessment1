@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
 
@@ -29,25 +24,63 @@ Dataset: [Activity monitoring data]("https://d396qusza40orc.cloudfront.net/repda
 The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17568 observations in this dataset.
 
 Download the data into the working directory:
-```{r block1}
+
+```r
 download.file("http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip",
               "activity.zip")
 ```
 Load the plyr and dplyr package, unzip and load the data as a _data frame tbl_ object named **activity** for easier manipulation with functions from the plyr and dplyr package later in this assignment.
-```{r block2}
+
+```r
 require(plyr, quietly = TRUE, warn.conflicts = FALSE)
 require(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 activity <- tbl_df(read.csv(unz("activity.zip", "activity.csv")))
 ```
 Load the lubridate package and convert the **_date_** variable from _factor_ to _POSIXct date_ class.
-```{r block3}
+
+```r
 require(lubridate)
+```
+
+```
+## Loading required package: lubridate
+## 
+## Attaching package: 'lubridate'
+## 
+## The following object is masked from 'package:plyr':
+## 
+##     here
+```
+
+```r
 activity$date <- ymd(activity$date)
 ```
 Review two summaries of **activity**
-```{r block4}
+
+```r
 summary(activity)
+```
+
+```
+##      steps             date               interval     
+##  Min.   :  0.00   Min.   :2012-10-01   Min.   :   0.0  
+##  1st Qu.:  0.00   1st Qu.:2012-10-16   1st Qu.: 588.8  
+##  Median :  0.00   Median :2012-10-31   Median :1177.5  
+##  Mean   : 37.38   Mean   :2012-10-31   Mean   :1177.5  
+##  3rd Qu.: 12.00   3rd Qu.:2012-11-15   3rd Qu.:1766.2  
+##  Max.   :806.00   Max.   :2012-11-30   Max.   :2355.0  
+##  NA's   :2304
+```
+
+```r
 str(activity)
+```
+
+```
+## Classes 'tbl_df', 'tbl' and 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : POSIXct, format: "2012-10-01" "2012-10-01" ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
 ```
 
 
@@ -55,7 +88,8 @@ str(activity)
 
 Omit records from **actvity** with missing values, then use group_by() and summarise() from the the dplyr package to calculate the total number of steps taken per day. 
 From this new object **daily_steps** we calculate the mean and median steps per day for the whole period.
-```{r block5}
+
+```r
 total_days <- length(unique(activity$date))
 daily_steps <- activity %>% na.omit() %>% group_by(date) %>% summarise(sum(steps))
 colnames(daily_steps)[2] <- "total_steps"
@@ -63,11 +97,19 @@ valid_days <- length(unique(daily_steps$date))
 mean_daily_steps <- as.integer(mean(daily_steps$total_steps))
 median_daily_steps <- median(daily_steps$total_steps)
 ```
-There are `r total_days` unique dates in **activity** but only `r valid_days` unique dates with stepcounts after omiting all records with missing values.
+There are 61 unique dates in **activity** but only 53 unique dates with stepcounts after omiting all records with missing values.
 
 
-```{r block6, fig.width = 8}
+
+```r
 require(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+```
+
+```
+## Warning: package 'ggplot2' was built under R version 3.1.3
+```
+
+```r
 # Create the histogram of the total number of steps taken each day
 ggplot(daily_steps, aes(x=total_steps)) +
     geom_histogram(binwidth=1000, fill="cyan", colour="grey50", size=.2) +
@@ -77,18 +119,28 @@ ggplot(daily_steps, aes(x=total_steps)) +
             using an activity monitoring device")
 ```
 
-The mean total number of steps taken per day is **`r mean_daily_steps`**.  
-The median total number of steps taken per day is **`r median_daily_steps`**.
+![](PA1_template_files/figure-html/block6-1.png) 
+
+The mean total number of steps taken per day is **10766**.  
+The median total number of steps taken per day is **10765**.
 
 ## 3. What is the average daily activity pattern?
 
 We illustrate the average daily activity pattern using a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).
 We again omit records with missing values from **activity** before using group_by() and summarise() to calculate the average number of steps  per 5 minute interval.  
-```{r block7, fig.width = 8}
+
+```r
 # calculate the average number of steps  per 5 minute interval  
 interval_steps <- activity %>% na.omit() %>% group_by(interval) %>% summarise(mean(steps))
 # load the chron package to create a new version of the interval variable of class "times"
 require(chron, quietly = TRUE, warn.conflicts = FALSE)
+```
+
+```
+## Warning: package 'chron' was built under R version 3.1.3
+```
+
+```r
 day <- format( seq.POSIXt(as.POSIXct(Sys.Date()), as.POSIXct(Sys.Date()+1), by = "5 min"), "%H%M%S", tz="GMT")
 for (i in 0:9) { day <- sub(paste("^0",i, sep = ""), paste("0",i,":", sep = ""), day) }
 for (i in 10:23) { day <- sub(paste("^",i, sep = ""), paste(i,":", sep = ""), day) }
@@ -110,24 +162,27 @@ ggplot(interval_steps, aes(x = interval2, y = mean_steps)) + geom_line(colour=
             in October and November 2012")
 ```
 
-The **`r max_steps`** 5-minute interval (from 08:35 am to 08:39 am) contains the maximum number of steps, on average across all the days in the dataset.
+![](PA1_template_files/figure-html/block7-1.png) 
+
+The **835** 5-minute interval (from 08:35 am to 08:39 am) contains the maximum number of steps, on average across all the days in the dataset.
 
 
 ## 4. Imputing missing values
 
-```{r block8}
+
+```r
 rows <- dim(activity)[1]
 complete_records <- sum(complete.cases(activity))
 na_records <- dim(activity)[1] - complete_records
 na_steps <- sum(is.na(activity$steps))
 na_date <- sum(is.na(activity$date))
 na_interval <- sum(is.na(activity$interval))
-
 ```
-The raw data provided has **`r rows`** rows of data. There are `r na_date` NA values in the **_date_** variable and `r na_interval` NA values in the **_interval_** variable. The `r na_steps` NA values in the **_steps_** variable account for why there are **`r na_records`** rows with missing values and **`r complete_records`** rows with no missing values, in the provided data. 
+The raw data provided has **17568** rows of data. There are 0 NA values in the **_date_** variable and 0 NA values in the **_interval_** variable. The 2304 NA values in the **_steps_** variable account for why there are **2304** rows with missing values and **15264** rows with no missing values, in the provided data. 
 
 The mean and median values for total steps are close in value while the shape of the time series data suggests a pattern related to the time of day. Therefor let us use the mean for each 5-minute interval to impute values for the missing data creating a new  data frame called **imputed_actvity**
-```{r block9, fig.width = 8}
+
+```r
 # merge average 5-minute interval caluclated before to activity data
 imputed_activity <- merge(activity, interval_steps, by = "interval", all = F)
 imputed_activity$interval2 <- NULL
@@ -149,13 +204,16 @@ ggplot(imputed_daily_steps, aes(x=total_steps)) +
             (includes imputation to replace missing values)")
 ```
 
-The mean total number of steps taken per day for **imputed_activity** data frame is **`r imputed_mean_daily_steps`**.  
-The median total number of steps taken per day for **imputed_activity** data frame is **`r imputed_median_daily_steps`**.  
+![](PA1_template_files/figure-html/block9-1.png) 
+
+The mean total number of steps taken per day for **imputed_activity** data frame is **10766**.  
+The median total number of steps taken per day for **imputed_activity** data frame is **10766**.  
 The median total number of steps taken increases by 1 using this imputation stategy. The mean does not change.  However the mass of data at the mean is increased by the imputation strategy as illustrated by the histogram.  
 
 ## 5. Are there differences in activity patterns between weekdays and weekends?
 
-```{r block10, fig.width = 8}
+
+```r
 # Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
 imputed_activity <- imputed_activity %>% mutate(weekday = wday(date, label = TRUE))
 imputed_activity$weekday <- revalue(imputed_activity$weekday, c("Sun"="weekend", "Sat"="weekend", 
@@ -180,6 +238,8 @@ ggplot(imputed_interval_steps, aes(x = time_of_day, y = mean_steps)) + geom_line
                 on Weekends vs Weekdays, aggregated in 5 minute intervals 
                 and averaged across all days, in October and November 2012")
 ```
+
+![](PA1_template_files/figure-html/block10-1.png) 
 
 Step activity in the **imputed_activity** data frame appears to start earlier in the day on weekdays
 and step activity is higher during the midday period on weekends.
